@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">Inventory</string>
     <string name="empty_view_title_text">No items.Add some</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
 </resources>

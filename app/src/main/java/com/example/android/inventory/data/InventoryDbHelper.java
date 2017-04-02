@@ -31,7 +31,7 @@ public class InventoryDbHelper extends SQLiteOpenHelper {
                 + InventoryEntry.COLUMN_PRODUCT_NAME + " TEXT NOT NULL, "
                 + InventoryEntry.COLUMN_CURRENT_QUANTITY + " INTEGER NOT NULL DEFAULT 0, "
                 + InventoryEntry.COLUMN_PRICE + " INTEGER NOT NULL DEFAULT 0, "
-                + InventoryEntry.COLUMN_IMAGE_URI + " TEXT);";
+                + InventoryEntry.COLUMN_IMAGE_PATH + " TEXT);";
 
         db.execSQL(SQL_CREATE_PETS_TABLE);
 

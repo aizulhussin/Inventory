@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.android.inventory.InventoryEditor"
-    android:padding="20dp"
-    >
+    tools:context="com.example.android.inventory.InventoryEditorActivity"
+    android:padding="20dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -21,14 +19,29 @@
             />
     </RelativeLayout>
 
-    <TextView
+    <EditText
+        android:id="@+id/product_name_edit_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:text="Leather Wallet"
+        android:hint="Product Name"
         />
+    <EditText
+        android:id="@+id/price_edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:hint="Product Price"
+        />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:text="Quantity"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        />
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -36,30 +49,57 @@
         >
 
         <Button
-            android:id="@+id/button_add_quantity"
+            android:id="@+id/button_minus_quantity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            android:text="+"
+            android:onClick="decreaseQuantity"
+            android:text="-"
             />
         <TextView
+            android:id="@+id/quantity_text_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-
-            android:layout_marginTop="20dp"
+            android:layout_marginRight="80dp"
+            android:layout_centerInParent="true"
             android:textSize="20sp"
+            android:textStyle="bold"
             android:text="10"
             />
         <Button
+            android:id="@+id/button_add_quantity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            android:text="-"
+            android:onClick="addQuantity"
+            android:text="+"
             />
 
-    </RelativeLayout>
 
+
+    </RelativeLayout>
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+
+    <Button
+        android:id="@+id/order_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Order From Supplier"
+        android:background="@color/colorPrimary"
+        />
+   <!-- <Button
+        android:id="@+id/delete_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="10dp"
+        android:text="Delete Product"
+        android:background="@color/colorRed"
+        />-->
+</RelativeLayout>
 
 </LinearLayout>
