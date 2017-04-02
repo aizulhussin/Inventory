@@ -88,7 +88,7 @@ public class InventoryEditorActivity extends AppCompatActivity {
         ContentValues values = new ContentValues();
         values.put(InventoryEntry.COLUMN_PRODUCT_NAME,productNameString);
         values.put(InventoryEntry.COLUMN_PRICE,priceString);
-        values.put(InventoryEntry.COLUMN_CURRENT_QUANTITY,quantityString);
+        values.put(InventoryEntry.COLUMN_QUANTITY,quantityString);
         values.put(InventoryEntry.COLUMN_IMAGE_PATH,"");
 
         if(currentUri==null) {
