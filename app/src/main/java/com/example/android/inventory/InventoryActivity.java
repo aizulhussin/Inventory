@@ -1,7 +1,9 @@
 package com.example.android.inventory;
 
+import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -9,10 +11,13 @@ import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.example.android.inventory.data.InventoryContract.InventoryEntry;
 import com.example.android.inventory.data.InventoryCursorAdapter;
+
+import static android.R.attr.id;
 
 public class InventoryActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -47,6 +52,15 @@ public class InventoryActivity extends AppCompatActivity implements LoaderManage
 
         //TODO set Item click listener
 
+        inventoryListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Intent intent = new Intent(InventoryActivity.this,InventoryEditorActivity.class);
+                Uri currentPetUri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI,id);
+                intent.setData(currentPetUri);
+                startActivity(intent);
+            }
+        });
 
     }
 

@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="100dp">
         <ImageView
+            android:id="@+id/product_image_view"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
@@ -89,6 +90,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:text="Order From Supplier"
+        android:onClick="orderProduct"
         android:background="@color/colorPrimary"
         />
    <!-- <Button
