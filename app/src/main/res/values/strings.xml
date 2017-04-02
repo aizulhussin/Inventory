@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Inventory</string>
+    <string name="empty_view_title_text">No items.Add some</string>
+</resources>
