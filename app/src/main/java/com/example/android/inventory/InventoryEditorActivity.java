@@ -1,14 +1,21 @@
 package com.example.android.inventory;
 
+import android.Manifest;
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.Loader;
@@ -16,6 +23,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -26,7 +34,9 @@ import android.widget.Toast;
 import com.example.android.inventory.data.InventoryContract.InventoryEntry;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -41,10 +51,11 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
     private Uri currentUri = null;
     private Uri imageUri = null;
     private String mCurrentPhotoPath;
-    static final int REQUEST_IMAGE_CAPTURE = 1;
-    static final int REQUEST_TAKE_PHOTO = 2;
 
-    private String LOG_CAT = InventoryEditorActivity.class.getSimpleName();
+    private String LOG_TAG = InventoryEditorActivity.class.getSimpleName();
+    private static final int PICK_IMAGE_REQUEST = 0;
+    private static final int SEND_MAIL_REQUEST = 1;
+    private static int INVENTORY_EDITOR_LOADER=2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,81 +68,32 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         currentUri = intent.getData();
 
         //get input reference
-        productNameEditText = (EditText)findViewById(R.id.product_name_edit_text);
-        productPriceEditText = (EditText)findViewById(R.id.price_edit_text);
-        productQuantityTextView = (TextView)findViewById(R.id.quantity_text_view);
-        productImageView = (ImageView)findViewById(R.id.product_image_view);
+        productNameEditText = (EditText) findViewById(R.id.product_name_edit_text);
+        productPriceEditText = (EditText) findViewById(R.id.price_edit_text);
+        productQuantityTextView = (TextView) findViewById(R.id.quantity_text_view);
+        productImageView = (ImageView) findViewById(R.id.product_image_view);
 
+        if(currentUri!=null) {
+            getSupportLoaderManager().initLoader(INVENTORY_EDITOR_LOADER, null, this);
+        }
 
         productImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-                //TODO load camera to capture photo and save the Uri
-                capturePhoto();
+                openImageSelector();
             }
         });
 
 
     }
 
-
-    private void capturePhoto(){
-
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-
-            // Create the File where the photo should go
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-
-            }
-
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                imageUri = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
-                        photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-            }
-
-        }
-    }
-
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            productImageView.setImageBitmap(imageBitmap);
-        }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
-
-            //do something
-            Log.d(LOG_CAT,"Image URI "+imageUri.toString());
-        }
-    }
-
-
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = image.getAbsolutePath();
-        return image;
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu options from the res/menu/menu_editor.xml file.
+        // This adds menu items to the app bar.
+        getMenuInflater().inflate(R.menu.menu_editor, menu);
+        return true;
     }
 
 
@@ -152,26 +114,26 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
     }
 
 
-    public void addQuantity(View view){
+    public void addQuantity(View view) {
 
         productQuantity++;
-        productQuantityTextView.setText(productQuantity);
+        productQuantityTextView.setText(Integer.toString(productQuantity));
 
     }
 
-    public void decreaseQuantity(View view){
+    public void decreaseQuantity(View view) {
 
         productQuantity--;
-        productQuantityTextView.setText(productQuantity);
+        productQuantityTextView.setText(Integer.toString(productQuantity));
     }
 
-    public void orderProduct(View view){
+    public void orderProduct(View view) {
 
         //TODO call intent to email order
     }
 
 
-    private void save(){
+    private void save() {
 
         String productNameString = productNameEditText.getText().toString();
         String priceString = productPriceEditText.getText().toString();
@@ -180,16 +142,17 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         //TODO add validations
 
         ContentValues values = new ContentValues();
-        values.put(InventoryEntry.COLUMN_PRODUCT_NAME,productNameString);
-        values.put(InventoryEntry.COLUMN_PRICE,priceString);
-        values.put(InventoryEntry.COLUMN_QUANTITY,quantityString);
+        values.put(InventoryEntry.COLUMN_PRODUCT_NAME, productNameString);
+        values.put(InventoryEntry.COLUMN_PRICE, priceString);
+        values.put(InventoryEntry.COLUMN_QUANTITY, quantityString);
 
-        if(imageUri!=null) {
+        if (imageUri != null) {
+            Log.i(LOG_TAG, "Uri: " + imageUri.toString());
             values.put(InventoryEntry.COLUMN_IMAGE_PATH, imageUri.toString());
         }
 
 
-        if(currentUri==null) {
+        if (currentUri == null) {
 
             //add
 
@@ -200,32 +163,38 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
             } else {
                 Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show();
             }
-        }else{
+        } else {
 
             //update
-            int rowsUpdated = getContentResolver().update(currentUri,values,null,null);
+            int rowsUpdated = getContentResolver().update(currentUri, values, null, null);
 
-            if(rowsUpdated > 0){
-                Toast.makeText(this,"Item saved",Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(this,"Error saving item",Toast.LENGTH_SHORT).show();
+            if (rowsUpdated > 0) {
+                Toast.makeText(this, "Item saved", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show();
             }
         }
 
     }
 
 
-    private void delete(){
+    private void delete() {
 
-        int rowsDeleted = getContentResolver().delete(currentUri,null,null);
+        int rowsDeleted = getContentResolver().delete(currentUri, null, null);
 
-        if (rowsDeleted == 0) {
+        if (rowsDeleted > 0) {
             Toast.makeText(this, "Item deleted",
                     Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this,"Delete unsuccessful",
+            Toast.makeText(this, "Delete unsuccessful",
                     Toast.LENGTH_SHORT).show();
         }
+
+        Intent intent = new Intent(InventoryEditorActivity.this,InventoryActivity.class);
+        startActivity(intent);
+
+        finish();
+
 
     }
 
@@ -240,7 +209,7 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
         };
 
-        return new CursorLoader(this,currentUri,projection,null,null,null);
+        return new CursorLoader(this, currentUri, projection, null, null, null);
     }
 
     @Override
@@ -248,15 +217,19 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
         if (cursor.moveToFirst()) {
 
+            Log.d(LOG_TAG,"Cursor Move To First");
+
             String productName = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRODUCT_NAME));
             String productPrice = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRICE));
-            String productQuantity = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_QUANTITY));
+            String productQuantityString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_QUANTITY));
             String productImagePath = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_IMAGE_PATH));
 
             productNameEditText.setText(productName);
             productPriceEditText.setText(productPrice);
-            productQuantityTextView.setText(productQuantity);
-            //productImageView.setImageURI(Uri.parse(productImagePath));
+            productQuantityTextView.setText(productQuantityString);
+            productImageView.setImageURI(Uri.parse(productImagePath));
+
+            productQuantity = Integer.parseInt(productQuantityString);
 
         }
 
@@ -270,4 +243,94 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         productQuantityTextView.setText("");
         //productImageView.setImageURI(null);
     }
+
+
+    public void openImageSelector() {
+        Intent intent;
+
+        if (Build.VERSION.SDK_INT < 19) {
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+        } else {
+            intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+        }
+
+        intent.setType("image/*");
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
+        // The ACTION_OPEN_DOCUMENT intent was sent with the request code READ_REQUEST_CODE.
+        // If the request code seen here doesn't match, it's the response to some other intent,
+        // and the below code shouldn't run at all.
+
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
+            // The document selected by the user won't be returned in the intent.
+            // Instead, a URI to that document will be contained in the return intent
+            // provided to this method as a parameter.  Pull that uri using "resultData.getData()"
+
+            if (resultData != null) {
+                imageUri = resultData.getData();
+                Log.i(LOG_TAG, "Uri: " + imageUri.toString());
+
+                //mTextView.setText(mUri.toString());
+                productImageView.setImageBitmap(getBitmapFromUri(imageUri));
+            }
+        } else if (requestCode == SEND_MAIL_REQUEST && resultCode == Activity.RESULT_OK) {
+
+        }
+    }
+
+    public Bitmap getBitmapFromUri(Uri uri) {
+
+        if (uri == null || uri.toString().isEmpty())
+            return null;
+
+        // Get the dimensions of the View
+        int targetW = productImageView.getWidth();
+        int targetH = productImageView.getHeight();
+
+        InputStream input = null;
+        try {
+            input = this.getContentResolver().openInputStream(uri);
+
+            // Get the dimensions of the bitmap
+            BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+            bmOptions.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(input, null, bmOptions);
+            input.close();
+
+            int photoW = bmOptions.outWidth;
+            int photoH = bmOptions.outHeight;
+
+            // Determine how much to scale down the image
+            int scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+
+            // Decode the image file into a Bitmap sized to fill the View
+            bmOptions.inJustDecodeBounds = false;
+            bmOptions.inSampleSize = scaleFactor;
+            bmOptions.inPurgeable = true;
+
+            input = this.getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(input, null, bmOptions);
+            input.close();
+            return bitmap;
+
+        } catch (FileNotFoundException fne) {
+            Log.e(LOG_TAG, "Failed to load image.", fne);
+            return null;
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Failed to load image.", e);
+            return null;
+        } finally {
+            try {
+                input.close();
+            } catch (IOException ioe) {
+
+            }
+        }
+    }
+
+
 }

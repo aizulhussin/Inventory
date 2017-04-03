@@ -17,7 +17,6 @@ import android.widget.ListView;
 import com.example.android.inventory.data.InventoryContract.InventoryEntry;
 import com.example.android.inventory.data.InventoryCursorAdapter;
 
-import static android.R.attr.id;
 
 public class InventoryActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -54,7 +53,7 @@ public class InventoryActivity extends AppCompatActivity implements LoaderManage
 
         inventoryListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long id) {
                 Intent intent = new Intent(InventoryActivity.this,InventoryEditorActivity.class);
                 Uri currentPetUri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI,id);
                 intent.setData(currentPetUri);

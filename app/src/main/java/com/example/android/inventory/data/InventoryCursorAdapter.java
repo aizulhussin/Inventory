@@ -46,7 +46,7 @@ public class InventoryCursorAdapter extends CursorAdapter {
         productNameTv.setText(productName);
         productPriceTv.setText(productPrice);
         productQuantityTv.setText(productQuantity);
-        //productImageView.setImageURI(Uri.parse(productImagePath));
+        productImageView.setImageURI(Uri.parse(productImagePath));
 
 
     }
