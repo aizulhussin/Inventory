@@ -1,26 +1,21 @@
 package com.example.android.inventory;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
+import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.NavUtils;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
-import android.support.v4.content.FileProvider;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -33,16 +28,16 @@ import android.widget.Toast;
 
 import com.example.android.inventory.data.InventoryContract.InventoryEntry;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class InventoryEditorActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
 
+    private static final int PICK_IMAGE_REQUEST = 0;
+    private static final int SEND_MAIL_REQUEST = 1;
+    private static int INVENTORY_EDITOR_LOADER = 2;
     private EditText productNameEditText;
     private EditText productPriceEditText;
     private TextView productQuantityTextView;
@@ -50,12 +45,10 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
     private int productQuantity = 0;
     private Uri currentUri = null;
     private Uri imageUri = null;
-    private String mCurrentPhotoPath;
-
     private String LOG_TAG = InventoryEditorActivity.class.getSimpleName();
-    private static final int PICK_IMAGE_REQUEST = 0;
-    private static final int SEND_MAIL_REQUEST = 1;
-    private static int INVENTORY_EDITOR_LOADER=2;
+    private String productNameString;
+    private String priceString;
+    private String quantityString;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,18 +74,37 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
             @Override
             public void onClick(View view) {
 
-                openImageSelector();
+                pickImage();
             }
         });
-
 
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu options from the res/menu/menu_editor.xml file.
-        // This adds menu items to the app bar.
+
         getMenuInflater().inflate(R.menu.menu_editor, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+
+
+        if (currentUri == null) {
+
+            MenuItem menuItemDelete = menu.findItem(R.id.action_delete);
+            menuItemDelete.setVisible(false);
+
+            MenuItem menuItemSell = menu.findItem(R.id.action_sell);
+            menuItemSell.setVisible(false);
+
+            MenuItem menuItemOrder = menu.findItem(R.id.action_order);
+            menuItemOrder.setVisible(false);
+
+        }
+
         return true;
     }
 
@@ -104,7 +116,13 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
                 save();
                 return true;
             case R.id.action_delete:
-                delete();
+                showDeleteConfirmationDialog();
+                return true;
+            case R.id.action_order:
+                orderProduct();
+                return true;
+            case R.id.action_sell:
+                sell();
                 return true;
             case android.R.id.home:
                 NavUtils.navigateUpFromSameTask(this);
@@ -115,64 +133,84 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
 
     public void addQuantity(View view) {
-
-        productQuantity++;
-        productQuantityTextView.setText(Integer.toString(productQuantity));
-
+        increase();
     }
 
     public void decreaseQuantity(View view) {
+        decrease();
+    }
+
+
+    public void sell() {
+        if (productQuantity > 0) {
+            decrease();
+            save();
+        } else {
+            Toast.makeText(this, "Quantity is zero", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    private void increase() {
+
+        productQuantity++;
+        productQuantityTextView.setText(Integer.toString(productQuantity));
+    }
+
+
+    private void decrease() {
 
         productQuantity--;
         productQuantityTextView.setText(Integer.toString(productQuantity));
     }
 
-    public void orderProduct(View view) {
-
-        //TODO call intent to email order
-    }
-
 
     private void save() {
 
-        String productNameString = productNameEditText.getText().toString();
-        String priceString = productPriceEditText.getText().toString();
-        String quantityString = productQuantityTextView.getText().toString();
+        productNameString = productNameEditText.getText().toString();
+        priceString = productPriceEditText.getText().toString();
+        quantityString = productQuantityTextView.getText().toString();
 
-        //TODO add validations
-
-        ContentValues values = new ContentValues();
-        values.put(InventoryEntry.COLUMN_PRODUCT_NAME, productNameString);
-        values.put(InventoryEntry.COLUMN_PRICE, priceString);
-        values.put(InventoryEntry.COLUMN_QUANTITY, quantityString);
-
-        if (imageUri != null) {
-            Log.i(LOG_TAG, "Uri: " + imageUri.toString());
-            values.put(InventoryEntry.COLUMN_IMAGE_PATH, imageUri.toString());
-        }
+        if (!TextUtils.isEmpty(productNameString) && !TextUtils.isEmpty(priceString)) {
 
 
-        if (currentUri == null) {
+            ContentValues values = new ContentValues();
+            values.put(InventoryEntry.COLUMN_PRODUCT_NAME, productNameString);
+            values.put(InventoryEntry.COLUMN_PRICE, priceString);
+            values.put(InventoryEntry.COLUMN_QUANTITY, quantityString);
 
-            //add
+            if (imageUri != null) {
+                Log.i(LOG_TAG, "Uri: " + imageUri.toString());
+                values.put(InventoryEntry.COLUMN_IMAGE_PATH, imageUri.toString());
+            }
 
-            Uri newUri = getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
 
-            if (newUri != null) {
-                Toast.makeText(this, "Item saved", Toast.LENGTH_SHORT).show();
+            if (currentUri == null) {
+
+                //add
+                Uri newUri = getContentResolver().insert(InventoryEntry.CONTENT_URI, values);
+
+                if (newUri != null) {
+                    Toast.makeText(this, "Item saved", Toast.LENGTH_SHORT).show();
+                    backToHome();
+                } else {
+                    Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show();
+                }
             } else {
-                Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show();
+
+                //update
+                int rowsUpdated = getContentResolver().update(currentUri, values, null, null);
+
+                if (rowsUpdated > 0) {
+                    Toast.makeText(this, "Item saved", Toast.LENGTH_SHORT).show();
+                    backToHome();
+                } else {
+                    Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show();
+                }
             }
         } else {
 
-            //update
-            int rowsUpdated = getContentResolver().update(currentUri, values, null, null);
-
-            if (rowsUpdated > 0) {
-                Toast.makeText(this, "Item saved", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Error saving item", Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(this, "Please ensure input fields are not empty", Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -190,13 +228,27 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
                     Toast.LENGTH_SHORT).show();
         }
 
-        Intent intent = new Intent(InventoryEditorActivity.this,InventoryActivity.class);
-        startActivity(intent);
-
-        finish();
+        backToHome();
 
 
     }
+
+
+    private void orderProduct() {
+
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.setType("plain/text");
+
+        String body = "Product:" + productNameString + "\n" +
+                "Quantity:" + quantityString + "\n" +
+                "Price:" + priceString;
+
+        emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Order " + productNameString + " From Supplier");
+        emailIntent.putExtra(android.content.Intent.EXTRA_TEXT, body);
+        startActivity(emailIntent);
+
+    }
+
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -219,17 +271,17 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
             Log.d(LOG_TAG,"Cursor Move To First");
 
-            String productName = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRODUCT_NAME));
-            String productPrice = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRICE));
-            String productQuantityString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_QUANTITY));
+            productNameString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRODUCT_NAME));
+            priceString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRICE));
+            quantityString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_QUANTITY));
             String productImagePath = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_IMAGE_PATH));
 
-            productNameEditText.setText(productName);
-            productPriceEditText.setText(productPrice);
-            productQuantityTextView.setText(productQuantityString);
+            productNameEditText.setText(productNameString);
+            productPriceEditText.setText(priceString);
+            productQuantityTextView.setText(quantityString);
             productImageView.setImageURI(Uri.parse(productImagePath));
 
-            productQuantity = Integer.parseInt(productQuantityString);
+            productQuantity = Integer.parseInt(quantityString);
 
         }
 
@@ -241,11 +293,11 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         productNameEditText.setText("");
         productPriceEditText.setText("");
         productQuantityTextView.setText("");
-        //productImageView.setImageURI(null);
+        productImageView.setImageURI(null);
     }
 
 
-    public void openImageSelector() {
+    public void pickImage() {
         Intent intent;
 
         if (Build.VERSION.SDK_INT < 19) {
@@ -330,6 +382,42 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
             }
         }
+    }
+
+
+    private void showDeleteConfirmationDialog() {
+        // Create an AlertDialog.Builder and set the message, and click listeners
+        // for the postivie and negative buttons on the dialog.
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.delete_dialog_msg);
+        builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked the "Delete" button, so delete the pet.
+                delete();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked the "Cancel" button, so dismiss the dialog
+                // and continue editing the pet.
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+            }
+        });
+
+        // Create and show the AlertDialog
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    //go back to main list
+    private void backToHome() {
+
+        Intent intent = new Intent(InventoryEditorActivity.this, InventoryActivity.class);
+        startActivity(intent);
+
+        finish();
     }
 
 

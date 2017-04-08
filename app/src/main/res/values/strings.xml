@@ -2,5 +2,18 @@
     <string name="app_name">Inventory</string>
     <string name="empty_view_title_text">No items.Add some</string>
     <string name="action_save">Save</string>
+    <string name="action_sell">Sell</string>
+    <string name="action_order">Order</string>
     <string name="action_delete">Delete</string>
+
+    <string name="delete_dialog_msg">Are you sure you want to delete this item?</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+
+
+    <string name="title_product_name">Product Name</string>
+    <string name="title_quantity">Quantity</string>
+    <string name="title_price">Price MYR</string>
+
+
 </resources>

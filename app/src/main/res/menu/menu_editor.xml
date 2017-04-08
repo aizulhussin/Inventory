@@ -4,6 +4,16 @@
     tools:context=".EditorActivity">
 
     <item
+        android:id="@+id/action_sell"
+        android:title="@string/action_sell"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_order"
+        android:title="@string/action_order"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_save"
         android:title="@string/action_save"
         app:showAsAction="always" />

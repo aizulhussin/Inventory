@@ -18,6 +18,7 @@
         </activity>
         <activity
             android:name=".InventoryEditorActivity"
+            android:label=""
             android:parentActivityName=".InventoryActivity"></activity>
 
         <provider
