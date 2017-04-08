@@ -4,12 +4,12 @@ import android.content.ContentUris;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -23,6 +23,7 @@ public class InventoryActivity extends AppCompatActivity implements LoaderManage
     private InventoryCursorAdapter mCursorAdapter;
     private ListView inventoryListView;
     private int INVENTORY_LOADER = 1;
+
 
 
     @Override
@@ -55,8 +56,8 @@ public class InventoryActivity extends AppCompatActivity implements LoaderManage
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long id) {
                 Intent intent = new Intent(InventoryActivity.this,InventoryEditorActivity.class);
-                Uri currentPetUri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI,id);
-                intent.setData(currentPetUri);
+                Uri uri = ContentUris.withAppendedId(InventoryEntry.CONTENT_URI, id);
+                intent.setData(uri);
                 startActivity(intent);
             }
         });

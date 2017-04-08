@@ -159,8 +159,12 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
     private void decrease() {
 
-        productQuantity--;
-        productQuantityTextView.setText(Integer.toString(productQuantity));
+        if (productQuantity > 0) {
+            productQuantity--;
+            productQuantityTextView.setText(Integer.toString(productQuantity));
+        } else {
+            Toast.makeText(this, "Quantity is zero", Toast.LENGTH_SHORT).show();
+        }
     }
 
 
@@ -170,7 +174,7 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         priceString = productPriceEditText.getText().toString();
         quantityString = productQuantityTextView.getText().toString();
 
-        if (!TextUtils.isEmpty(productNameString) && !TextUtils.isEmpty(priceString)) {
+        if (!TextUtils.isEmpty(productNameString) && !TextUtils.isEmpty(priceString) && imageUri != null) {
 
 
             ContentValues values = new ContentValues();
@@ -209,7 +213,7 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
             }
         } else {
 
-            Toast.makeText(this, "Please ensure input fields are not empty", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please ensure input fields are not empty and image is selected", Toast.LENGTH_SHORT).show();
         }
 
     }
@@ -278,7 +282,9 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
             productNameEditText.setText(productNameString);
             productPriceEditText.setText(priceString);
             productQuantityTextView.setText(quantityString);
-            productImageView.setImageURI(Uri.parse(productImagePath));
+
+            imageUri = Uri.parse(productImagePath);
+            productImageView.setImageURI(imageUri);
 
             productQuantity = Integer.parseInt(quantityString);
 
