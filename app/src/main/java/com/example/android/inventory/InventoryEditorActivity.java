@@ -36,7 +36,6 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
 
     private static final int PICK_IMAGE_REQUEST = 0;
-    private static final int SEND_MAIL_REQUEST = 1;
     private static int INVENTORY_EDITOR_LOADER = 2;
     private EditText productNameEditText;
     private EditText productPriceEditText;
@@ -66,7 +65,7 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         productQuantityTextView = (TextView) findViewById(R.id.quantity_text_view);
         productImageView = (ImageView) findViewById(R.id.product_image_view);
 
-        if(currentUri!=null) {
+        if (currentUri != null) {
             getSupportLoaderManager().initLoader(INVENTORY_EDITOR_LOADER, null, this);
         }
 
@@ -269,7 +268,7 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
         if (cursor.moveToFirst()) {
 
-            Log.d(LOG_TAG,"Cursor Move To First");
+            Log.d(LOG_TAG, "Cursor Move To First");
 
             productNameString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRODUCT_NAME));
             priceString = cursor.getString(cursor.getColumnIndex(InventoryEntry.COLUMN_PRICE));
@@ -308,29 +307,20 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
         }
 
         intent.setType("image/*");
-        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+        startActivityForResult(Intent.createChooser(intent, "Select Image"), PICK_IMAGE_REQUEST);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
-        // The ACTION_OPEN_DOCUMENT intent was sent with the request code READ_REQUEST_CODE.
-        // If the request code seen here doesn't match, it's the response to some other intent,
-        // and the below code shouldn't run at all.
+
 
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == Activity.RESULT_OK) {
-            // The document selected by the user won't be returned in the intent.
-            // Instead, a URI to that document will be contained in the return intent
-            // provided to this method as a parameter.  Pull that uri using "resultData.getData()"
 
             if (resultData != null) {
                 imageUri = resultData.getData();
                 Log.i(LOG_TAG, "Uri: " + imageUri.toString());
-
-                //mTextView.setText(mUri.toString());
                 productImageView.setImageBitmap(getBitmapFromUri(imageUri));
             }
-        } else if (requestCode == SEND_MAIL_REQUEST && resultCode == Activity.RESULT_OK) {
-
         }
     }
 
@@ -386,20 +376,18 @@ public class InventoryEditorActivity extends AppCompatActivity implements Loader
 
 
     private void showDeleteConfirmationDialog() {
-        // Create an AlertDialog.Builder and set the message, and click listeners
-        // for the postivie and negative buttons on the dialog.
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(R.string.delete_dialog_msg);
         builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Delete" button, so delete the pet.
+
                 delete();
             }
         });
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                // User clicked the "Cancel" button, so dismiss the dialog
-                // and continue editing the pet.
+
                 if (dialog != null) {
                     dialog.dismiss();
                 }
